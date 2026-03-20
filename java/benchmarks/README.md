@@ -1,6 +1,6 @@
 # CuVS Java API benchmarks
 
-This maven project contains JMH benchmarks for the CAGRA Java API.
+This maven project contains JMH benchmarks for the CuVS Java API (CAGRA, HNSW, device matrix).
 
 ## Prerequisites
 - [CuVS libraries](https://docs.rapids.ai/api/cuvs/stable/build/#build-from-source)
@@ -20,8 +20,29 @@ java -jar target/benchmarks.jar
 The environment variable is needed to silence RAFT logging; RAFT emits some logs at INFO level when
 building indices and queries, and writing them to stdout (the default) influences benchmark results.
 
-It is possible to change the dataset size and the vectors dimension via 2 parameters:
+## Overhead benchmarks (cuvs_bench comparison)
+
+`CagraOverheadBenchmarks` and `HnswOverheadBenchmarks` measure build and search for Java vs native
+overhead comparison. All params are configurable via `-p`:
+
+```shell
+# CAGRA (defaults match cuvs_bench test group)
+java -jar target/benchmarks.jar CagraOverheadBenchmarks
+
+# Override params
+java -jar target/benchmarks.jar CagraOverheadBenchmarks -p graphDegree=64 -p size=50000
+
+# HNSW
+java -jar target/benchmarks.jar HnswOverheadBenchmarks -p ef=20 -p size=10000
+```
+
+Params: `graphDegree`, `intermediateGraphDegree`, `itopk`, `searchWidth`, `size`, `dims`, `numQueries`
+(CAGRA); `graphDegree`, `intermediateGraphDegree`, `ef`, `size`, `dims`, `numQueries` (HNSW).
+
+## Other options
+
+Change dataset size and dimension:
 ```shell
 java -jar target/benchmarks.jar -p size=4 -p dims=4
 ```
-Use `java -jar target/benchmarks.jar -h` for details on the options to fine-tune your benchmark runs.
+Use `java -jar target/benchmarks.jar -h` for details on options.
