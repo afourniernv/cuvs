@@ -38,6 +38,9 @@ final class JDKProvider implements CuVSProvider {
     private static final int MAX_VERSION_DISTANCE = 3;
 
     static CuVSVersion fromString(String versionString) {
+      if (versionString == null || versionString.isBlank()) {
+        return null;
+      }
       var tokens = versionString.split("\\.");
       final short major = parseToken(tokens, 0);
       final short minor = parseToken(tokens, 1);
@@ -163,6 +166,9 @@ final class JDKProvider implements CuVSProvider {
   static void checkCuVSVersionMatching(
       String mavenVersionString, short major, short minor, short patch)
       throws ProviderInitializationException {
+    if (mavenVersionString == null || mavenVersionString.isBlank()) {
+      return; // Skip version check when manifest version unavailable (e.g. shaded jar)
+    }
     var mavenVersion = CuVSVersion.fromString(mavenVersionString);
     var cuvsVersion = new CuVSVersion(major, minor, patch);
 
