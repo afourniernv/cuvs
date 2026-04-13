@@ -12,6 +12,7 @@ instantiating benchmark backends.
 from typing import Dict, Type, Optional
 from pathlib import Path
 import importlib
+import importlib.metadata
 import yaml
 
 from .base import BenchmarkBackend
@@ -375,9 +376,43 @@ def get_backend(name: str, config: Dict) -> BenchmarkBackend:
     return registry.get_backend(name, config)
 
 
+def _try_load_plugin(name: str) -> bool:
+    """
+    Attempt to load a backend plugin via setuptools entry points.
+
+    Looks for an entry point group ``cuvs_bench.backends`` with key *name*,
+    calls the registered callable (expected to call ``register_backend`` and
+    ``register_config_loader``), and returns True if successful.
+
+    Parameters
+    ----------
+    name : str
+        Backend name to look up in entry points
+
+    Returns
+    -------
+    bool
+        True if the plugin was found and loaded, False otherwise
+    """
+    eps = importlib.metadata.entry_points(group="cuvs_bench.backends")
+    for ep in eps:
+        if ep.name == name:
+            try:
+                register_fn = ep.load()
+                register_fn()
+                return True
+            except Exception as exc:
+                print(f"[Registry] Warning: Failed to load plugin '{name}': {exc}")
+                return False
+    return False
+
+
 def get_backend_class(name: str) -> Type[BenchmarkBackend]:
     """
     Get the backend class (not instance) from the global registry.
+
+    If the backend is not registered, attempts to auto-discover it via
+    setuptools entry points (``cuvs_bench.backends`` group).
 
     Parameters
     ----------
@@ -391,9 +426,12 @@ def get_backend_class(name: str) -> Type[BenchmarkBackend]:
     """
     registry = get_registry()
     if name not in registry._backends:
+        _try_load_plugin(name)
+    if name not in registry._backends:
         available = ", ".join(registry._backends.keys())
+        hint = f" Install with: pip install cuvs-bench[{name}]"
         raise ValueError(
-            f"Backend '{name}' not found. Available backends: {available or '(none)'}"
+            f"Backend '{name}' not found. Available backends: {available or '(none)'}.{hint}"
         )
     return registry._backends[name]
 
@@ -440,6 +478,9 @@ def get_config_loader(name: str) -> Type:
     """
     Get a registered config loader class by name.
 
+    If the loader is not registered, attempts to auto-discover it via
+    setuptools entry points (``cuvs_bench.config_loaders`` group).
+
     Parameters
     ----------
     name : str
@@ -455,11 +496,25 @@ def get_config_loader(name: str) -> Type:
     ValueError
         If config loader is not registered
     """
-    # _CONFIG_LOADER_REGISTRY is a dictionary that maps backend names to config loader classes
+    if name not in _CONFIG_LOADER_REGISTRY:
+        # Try loading via entry points (cuvs_bench.config_loaders group)
+        eps = importlib.metadata.entry_points(group="cuvs_bench.config_loaders")
+        for ep in eps:
+            if ep.name == name:
+                try:
+                    register_fn = ep.load()
+                    register_fn()
+                except Exception as exc:
+                    print(
+                        f"[Registry] Warning: Failed to load config loader plugin '{name}': {exc}"
+                    )
+                break
+
     if name not in _CONFIG_LOADER_REGISTRY:
         available = ", ".join(_CONFIG_LOADER_REGISTRY.keys()) or "none"
+        hint = f" Install with: pip install cuvs-bench[{name}]"
         raise ValueError(
-            f"Unknown config loader for backend: '{name}'. Available: {available}"
+            f"Unknown config loader for backend: '{name}'. Available: {available}.{hint}"
         )
     return _CONFIG_LOADER_REGISTRY[name]
 

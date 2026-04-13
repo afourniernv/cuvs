@@ -20,8 +20,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import yaml
 
-from .base import BenchmarkBackend, BuildResult, Dataset, SearchResult
-from ..orchestrator.config_loaders import (
+from cuvs_bench.backends.base import BenchmarkBackend, BuildResult, Dataset, SearchResult
+from cuvs_bench.backends.registry import register_backend, register_config_loader
+from cuvs_bench.orchestrator.config_loaders import (
     ConfigLoader,
     DatasetConfig,
     BenchmarkConfig,
@@ -121,7 +122,7 @@ class OpenSearchConfigLoader(ConfigLoader):
             os.fspath(config_path)
             if config_path is not None
             else os.path.join(
-                os.path.dirname(os.path.realpath(__file__)), "../config"
+                os.path.dirname(os.path.realpath(__file__)), "config"
             )
         )
 
@@ -993,3 +994,9 @@ class OpenSearchBackend(BenchmarkBackend):
             },
             success=True,
         )
+
+
+def register() -> None:
+    """Register the OpenSearch backend and config loader with cuvs-bench."""
+    register_backend("opensearch", OpenSearchBackend)
+    register_config_loader("opensearch", OpenSearchConfigLoader)

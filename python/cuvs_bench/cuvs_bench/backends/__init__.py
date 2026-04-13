@@ -25,12 +25,10 @@ from .registry import (
 )
 
 from .cpp_gbench import CppGoogleBenchmarkBackend
-from .opensearch import OpenSearchBackend
 
 # Auto-register built-in backends
 _registry = get_registry()
 _registry.register("cpp_gbench", CppGoogleBenchmarkBackend)
-_registry.register("opensearch", OpenSearchBackend)
 
 __all__ = [
     # Base classes and data structures
@@ -45,5 +43,4 @@ __all__ = [
     "get_backend",
     # Built-in backends
     "CppGoogleBenchmarkBackend",
-    "OpenSearchBackend",
 ]
