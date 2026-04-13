@@ -39,13 +39,13 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-opensearch = ["cuvs-bench-opensearch"]
+opensearch = ["opensearch-py>=2.4.0"]
 
 [project.entry-points."cuvs_bench.backends"]
-opensearch = "cuvs_bench_opensearch:register"
+opensearch = "cuvs_bench.backends.opensearch:register"
 
 [project.entry-points."cuvs_bench.config_loaders"]
-opensearch = "cuvs_bench_opensearch:register"
+opensearch = "cuvs_bench.backends.opensearch:register"
 
 [project.urls]
 Homepage = "https://github.com/rapidsai/cuvs"
